@@ -1,19 +1,19 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: petclinic-ingress
-  namespace: petclinic
-  annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
+  name: jenkins-ingress
+  namespace: jenkins
+#  annotations:
+#    nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
   ingressClassName: traefik
   rules:
   - http:
       paths:
-      - path: /
+      - path: /jenkins
         pathType: Prefix
         backend:
           service:
-            name: petclinic-service
+            name: jenkins-service
             port:
               number: 8080
