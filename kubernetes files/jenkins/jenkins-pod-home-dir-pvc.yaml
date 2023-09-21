@@ -9,4 +9,4 @@ spec:
   storageClassName: longhorn-retain-sc
   resources:
     requests:
-      storage: 0.5Gi
+      storage: 1.001Gi

@@ -7,5 +7,6 @@ spec:
   stripPrefix:
     prefixes:
       - /petclinic
-      - /jenkins
+#      - /jenkins
       - /longhorn
+      - /sonarqube

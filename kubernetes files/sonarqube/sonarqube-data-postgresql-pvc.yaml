@@ -1,0 +1,41 @@
+# Please edit the object below. Lines beginning with a '#' will be ignored,
+# and an empty file will abort the edit. If an error occurs while saving this file will be
+# reopened with the relevant failures.
+#
+# persistentvolumeclaims "data-sonarqube-postgresql-0" was not valid:
+# * spec.resources.requests.storage: Forbidden: field can not be less than previous value
+#
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  annotations:
+#    pv.kubernetes.io/bind-completed: "yes"
+    pv.kubernetes.io/bound-by-controller: "yes"
+    volume.beta.kubernetes.io/storage-provisioner: driver.longhorn.io
+    volume.kubernetes.io/storage-provisioner: driver.longhorn.io
+#  creationTimestamp: "2023-09-19T18:30:43Z"
+  finalizers:
+  - kubernetes.io/pvc-protection
+  labels:
+    app.kubernetes.io/instance: sonarqube
+    app.kubernetes.io/name: postgresql
+    role: primary
+  name: data-sonarqube-postgresql-0
+  namespace: sonarqube
+#  resourceVersion: "48264"
+#  uid: cf22ed08-d064-44bc-9926-f210b8364abd
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: longhorn
+  volumeMode: Filesystem
+#  volumeName: pvc-cf22ed08-d064-44bc-9926-f210b8364abd
+status:
+  accessModes:
+  - ReadWriteOnce
+  capacity:
+    storage: 1Gi
+  phase: Bound

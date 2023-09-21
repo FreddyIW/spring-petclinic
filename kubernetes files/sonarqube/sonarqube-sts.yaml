@@ -1,0 +1,225 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  annotations:
+    meta.helm.sh/release-name: sonarqube
+    meta.helm.sh/release-namespace: sonarqube
+#  creationTimestamp: "2023-09-19T18:30:43Z"
+  generation: 1
+  labels:
+    app: sonarqube
+    app.kubernetes.io/component: sonarqube-sonarqube
+    app.kubernetes.io/instance: sonarqube
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: sonarqube-sonarqube-sonarqube
+    app.kubernetes.io/part-of: sonarqube
+    app.kubernetes.io/version: 10.2.0-community
+    chart: sonarqube-10.2.0_738
+    heritage: Helm
+    release: sonarqube
+  name: sonarqube-sonarqube
+  namespace: sonarqube
+#  resourceVersion: "53790"
+#  uid: 81ab79c3-13de-413a-bed7-1d3b7aef8c11
+spec:
+#  extraEnv:
+#    sonar.web.context: /sonarqube
+  persistentVolumeClaimRetentionPolicy:
+    whenDeleted: Retain
+    whenScaled: Retain
+  podManagementPolicy: OrderedReady
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: sonarqube
+      release: sonarqube
+  serviceName: sonarqube-sonarqube
+  template:
+    metadata:
+      annotations:
+        checksum/config: 96022572c1a961a579487009a3d45704562262036575e002c8afc92201f452d2
+        checksum/init-fs: 501225b4dac00c50ce66186c916f7a8570a5a186b503fafaf38d42195567f5a4
+        checksum/init-sysctl: 9647a03b2b2750921c6d48fa2fed0ff6051600b1e4fa43d83c8f2ed8c2db7275
+        checksum/plugins: c11a6775f80a0851c23211a0aa71411a5117d95733fcb3ba3b4d009ce3bf8420
+        checksum/secret: 4cbb9f9e726f8ca78aa24d9842c45e999ca4cc99b5a324480bc30042553b0ebf
+      creationTimestamp: null
+      labels:
+        app: sonarqube
+        release: sonarqube
+    spec:
+#      extraEnv:
+#        sonar.web.context: /sonarqube
+      containers:
+      - env:
+        - name: SONAR_HELM_CHART_VERSION
+          value: 10.2.0_738
+        - name: SONAR_WEB_JAVAOPTS
+        - name: SONAR_WEB_CONTEXT
+          value: /
+        - name: SONAR_CE_JAVAOPTS
+        - name: SONAR_JDBC_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: postgresql-password
+              name: sonarqube-postgresql
+        - name: SONAR_WEB_SYSTEMPASSCODE
+          valueFrom:
+            secretKeyRef:
+              key: SONAR_WEB_SYSTEMPASSCODE
+              name: sonarqube-sonarqube-monitoring-passcode
+        - name: SONAR_WEB_CONTEXT
+          value: /sonarqube
+        envFrom:
+        - configMapRef:
+            name: sonarqube-sonarqube-jdbc-config
+        image: sonarqube:10.2.0-community
+        imagePullPolicy: IfNotPresent
+#        extraEnv:
+#          sonar.web.context: /sonarqube
+        livenessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - |
+              host="$(hostname -i || echo '127.0.0.1')"
+              wget --no-proxy --quiet -O /dev/null --timeout=1 --header="X-Sonar-Passcode: $SONAR_WEB_SYSTEMPASSCODE" "http://${host}:9000/api/system/liveness"
+          failureThreshold: 6
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          successThreshold: 1
+          timeoutSeconds: 1
+ #         sonarWebContext: /sonarqube/
+        name: sonarqube
+        ports:
+        - containerPort: 9000
+          name: http
+          protocol: TCP
+        readinessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - "#!/bin/bash\n# A Sonarqube container is considered ready if the status
+              is UP, DB_MIGRATION_NEEDED or DB_MIGRATION_RUNNING\n# status about migration
+              are added to prevent the node to be kill while sonarqube is upgrading
+              the database.\nhost=\"$(hostname -i || echo '127.0.0.1')\"\nif wget
+              --no-proxy -qO- http://${host}:9000/api/system/status | grep -q -e '\"status\":\"UP\"'
+              -e '\"status\":\"DB_MIGRATION_NEEDED\"' -e '\"status\":\"DB_MIGRATION_RUNNING\"';
+              then\n\texit 0\nfi\nexit 1\n"
+          failureThreshold: 6
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          successThreshold: 1
+          timeoutSeconds: 1
+  #        sonarWebContext: /sonarqube/
+        resources:
+          limits:
+            cpu: 800m
+            memory: 4Gi
+          requests:
+            cpu: 400m
+            memory: 2Gi
+        securityContext:
+          runAsUser: 1000
+        startupProbe:
+          failureThreshold: 24
+          httpGet:
+            path: /api/system/status
+            port: http
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+#          sonarWebContext: /sonarqube/
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /opt/sonarqube/data
+          name: sonarqube
+          subPath: data
+        - mountPath: /opt/sonarqube/temp
+          name: sonarqube
+          subPath: temp
+        - mountPath: /opt/sonarqube/logs
+          name: sonarqube
+          subPath: logs
+        - mountPath: /tmp
+          name: tmp-dir
+      dnsPolicy: ClusterFirst
+      initContainers:
+      - command:
+        - /bin/sh
+        - -c
+        - for i in $(seq 1 200); do nc -z -w3 sonarqube-postgresql 5432 && exit 0
+          || sleep 2; done; exit 1
+        image: busybox:1.32
+        imagePullPolicy: IfNotPresent
+        name: wait-for-db
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      - command:
+        - sh
+        - -e
+        - /tmp/scripts/init_sysctl.sh
+        image: busybox:1.32
+        imagePullPolicy: IfNotPresent
+        name: init-sysctl
+        resources: {}
+        securityContext:
+          privileged: true
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /tmp/scripts/
+          name: init-sysctl
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext:
+        fsGroup: 1000
+      serviceAccount: default
+      serviceAccountName: default
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - configMap:
+          defaultMode: 420
+          items:
+          - key: init_sysctl.sh
+            path: init_sysctl.sh
+          name: sonarqube-sonarqube-init-sysctl
+        name: init-sysctl
+      - configMap:
+          defaultMode: 420
+          items:
+          - key: init_fs.sh
+            path: init_fs.sh
+          name: sonarqube-sonarqube-init-fs
+        name: init-fs
+      - configMap:
+          defaultMode: 420
+          items:
+          - key: install_plugins.sh
+            path: install_plugins.sh
+          name: sonarqube-sonarqube-install-plugins
+        name: install-plugins
+      - emptyDir: {}
+        name: sonarqube
+      - emptyDir: {}
+        name: tmp-dir
+  updateStrategy:
+    rollingUpdate:
+      partition: 0
+    type: RollingUpdate
+status:
+  availableReplicas: 1
+  collisionCount: 0
+  currentReplicas: 1
+  currentRevision: sonarqube-sonarqube-7bf7ffbf7c
+  observedGeneration: 1
+  readyReplicas: 1
+  replicas: 1
+  updateRevision: sonarqube-sonarqube-7bf7ffbf7c
+  updatedReplicas: 1
