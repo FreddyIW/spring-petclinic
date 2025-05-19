@@ -1,3 +1,42 @@
-job1:
+stages:
+  - build
+  - test
+  - deploy_staging
+  - deploy_production
+
+# Build stage (2 jobs)
+build_job_1:
+  stage: build
   script:
-    - echo "Hello, GitLab CI!"
+    - echo "Building frontend..."
+
+build_job_2:
+  stage: build
+  script:
+    - echo "Building backend..."
+
+# Test stage (2 jobs)
+test_job_1:
+  stage: test
+  script:
+    - echo "Running unit tests..."
+
+test_job_2:
+  stage: test
+  script:
+    - echo "Running integration tests..."
+
+# Deploy to staging (auto)
+deploy_staging:
+  stage: deploy_staging
+  script:
+    - echo "Deploying to staging..."
+
+# Deploy to production (manual)
+deploy_production:
+  stage: deploy_production
+  script:
+    - echo "Deploying to production..."
+  when: manual
+  only:
+    - main
