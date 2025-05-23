@@ -1,0 +1,15 @@
+stages:
+  - build
+  - deploy
+
+# Build stage
+build_job_1:
+  stage: build
+  script:
+    - echo "Building frontend..."
+
+# Deploy stage
+deploy_job_1:
+  stage: deploy
+  script:
+    - echo "Deploying to staging..."
