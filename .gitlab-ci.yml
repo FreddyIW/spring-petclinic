@@ -18,13 +18,12 @@ build_job_1:
     - docker:dind
   script:
     - ./gradlew build -Dtestcontainers.use.docker.host=true
-    - docker login -u "$DOCKERHUB_USERNAME" -p "$DOCKERHUB_PASSWORD"
-    - docker build -t $DOCKER_IMAGE:$DOCKER_TAG .
-    - docker push $DOCKER_IMAGE:$DOCKER_TAG
 
 build_job_2:
   stage: build
   image: docker:latest
+  variables:
+    DOCKER_HOST: ""
   script:
     - docker login -u "$DOCKERHUB_USERNAME" -p "$DOCKERHUB_PASSWORD"
     - docker build -t $DOCKER_IMAGE:$DOCKER_TAG .
