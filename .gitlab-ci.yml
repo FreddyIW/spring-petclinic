@@ -18,6 +18,10 @@ build_job_1:
     - docker:dind
   script:
     - ./gradlew build -Dtestcontainers.use.docker.host=true
+  artifacts:
+    paths:
+      - build/libs/spring-petclinic-3.1.0.jar
+    expire_in: 1 hour
 
 build_job_2:
   stage: build
@@ -33,6 +37,7 @@ build_job_2:
     - docker push $DOCKER_IMAGE:$DOCKER_TAG
   needs:
     - build_job_1
+      artifacts: true
 
 # Deploy stage
 deploy_job_1:
