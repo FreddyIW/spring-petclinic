@@ -9,7 +9,7 @@ variables:
 # Build stage
 build_job_1:
   stage: build
-  image: gradle:7.6-jdk17
+  image: docker:20.10.16-dind
   services:
     - docker:dind
   script:
