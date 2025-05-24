@@ -22,8 +22,11 @@ build_job_1:
 build_job_2:
   stage: build
   image: docker:latest
+  services:
+    - docker:dind
   variables:
-    DOCKER_HOST: ""
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
   script:
     - docker login -u "$DOCKERHUB_USERNAME" -p "$DOCKERHUB_PASSWORD"
     - docker build -t $DOCKER_IMAGE:$DOCKER_TAG .
